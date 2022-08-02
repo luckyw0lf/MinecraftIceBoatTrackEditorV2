@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+        <title>MCTrackGenerator</title>
+
+        <!-- Babylon.js -->
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.6.2/dat.gui.min.js"></script>
+        <script src="https://assets.babylonjs.com/generated/Assets.js"></script>
+        <script src="https://preview.babylonjs.com/ammo.js"></script>
+        <script src="https://preview.babylonjs.com/cannon.js"></script>
+        <script src="https://preview.babylonjs.com/Oimo.js"></script>
+        <script src="https://preview.babylonjs.com/earcut.min.js"></script>
+        <script src="https://preview.babylonjs.com/babylon.js"></script>
+        <script src="https://preview.babylonjs.com/materialsLibrary/babylonjs.materials.min.js"></script>
+        <script src="https://preview.babylonjs.com/proceduralTexturesLibrary/babylonjs.proceduralTextures.min.js"></script>
+        <script src="https://preview.babylonjs.com/postProcessesLibrary/babylonjs.postProcess.min.js"></script>
+        <script src="https://preview.babylonjs.com/loaders/babylonjs.loaders.js"></script>
+        <script src="https://preview.babylonjs.com/serializers/babylonjs.serializers.min.js"></script>
+        <script src="https://preview.babylonjs.com/gui/babylon.gui.min.js"></script>
+        <script src="https://preview.babylonjs.com/inspector/babylon.inspector.bundle.js"></script>
+
+        <style>
+            html, body {
+                overflow: hidden;
+                width: 100%;
+                height: 100%;
+                margin: 0;
+                padding: 0;
+            }
+
+            #renderCanvas {
+                width: 100%;
+                height: 100%;
+                touch-action: none;
+            }
+        </style>
+    </head>
+<body>
+    <canvas id="renderCanvas"></canvas>
+    <script>
+        var canvas = document.getElementById("renderCanvas");
+
+        var startRenderLoop = function (engine, canvas) {
+            engine.runRenderLoop(function () {
+                if (sceneToRender && sceneToRender.activeCamera) {
+                    sceneToRender.render();
+                }
+            });
+        }
+
+        var engine = null;
+        var scene = null;
+        var sceneToRender = null;
+        var createDefaultEngine = function() { return new BABYLON.Engine(canvas, true, { preserveDrawingBuffer: true, stencil: true,  disableWebGL2Support: false}); };
+        var createScene = function () {
+    // This creates a basic Babylon Scene object (non-mesh)
+    var scene = new BABYLON.Scene(engine);
+        // This creates a basic Babylon Scene object (non-mesh)
+        var scene = new BABYLON.Scene(engine);
+    
+        // This creates and positions a free camera (non-mesh)
+        // var camera = new BABYLON.FreeCamera("camera1", new BABYLON.Vector3(25, 15, -15), scene);
+        var camera = new BABYLON.ArcRotateCamera("camera1", 0, 0, 0, new BABYLON.Vector3(0, 0, 0), scene);
+        // camera.panningSensibility = 0;
+        // camera.panningSensibility = 0;
+        camera.lowerBetaLimit = 0;
+        camera.upperBetaLimit = 0;
+        camera.setPosition(new BABYLON.Vector3(0, 0, -50));
+        // This targets the camera to scene origin
+        camera.setTarget(BABYLON.Vector3.Zero());
+        camera.alpha = 0;
+    
+        // This attaches the camera to the canvas
+        camera.attachControl(canvas, true);
+    
+        // This creates a light, aiming 0,1,0 - to the sky (non-mesh)
+        var light = new BABYLON.HemisphericLight("light", new BABYLON.Vector3(0, 1, 0), scene);
+    
+        // Default intensity is 1. Let's dim the light a small amount
+        light.intensity = 0.7;
+
+
+        //code
+        let pathBlockArray = [];
+        let pathArray = [];
+        var curve = BABYLON.Curve3;
+        const previewBlock = BABYLON.MeshBuilder.CreateBox("previewBlock",{});
+
+        //eventHandler keydown
+        document.addEventListener("keydown", function(event) {
+            console.log(event.keyCode)
+            //move previewBlock
+            if (event.keyCode == 87) {
+                previewBlock.position.x -= 5;
+            }
+            if (event.keyCode == 83) {
+                previewBlock.position.x += 5;
+            }
+            if (event.keyCode == 65) {
+                previewBlock.position.z -= 5;
+            }
+            if (event.keyCode == 68) {
+                previewBlock.position.z += 5;
+            }
+
+            //place block
+            if(event.keyCode == 13) {
+                pathBlockArray.push(BABYLON.MeshBuilder.CreateBox("pathBlock",{}));
+                tempblock = pathBlockArray[pathBlockArray.length-1];
+                tempblock.position = previewBlock.position;
+                pathArray.push(tempblock.absolutePosition);
+                if(pathArray.length >= 2){
+                    generateCurve();
+                }
+            }
+
+            if(event.keyCode == 90){
+                pathBlockArray.pop().dispose();
+                pathArray.pop();
+                generateCurve();
+            }
+        });
+
+
+        function generateCurve(){
+            var curve = new BABYLON.Curve3.CreateCatmullRomSpline(pathArray, 25, false);
+            while(scene.getMeshByName("lines") != null){
+                scene.getMeshByName("lines").dispose();
+            }
+            var lines = BABYLON.MeshBuilder.CreateLines("lines", {points: curve.getPoints()}, scene);
+            scene.addMesh(lines);
+        }
+
+        return scene;
+    };
+    window.initFunction = async function() {
+        
+        var asyncEngineCreation = async function() {
+            try {
+            return createDefaultEngine();
+            } catch(e) {
+            console.log("the available createEngine function failed. Creating the default engine instead");
+            return createDefaultEngine();
+            }
+        }
+
+        window.engine = await asyncEngineCreation();
+        if (!engine) throw 'engine should not be null.';
+        startRenderLoop(engine, canvas);
+        window.scene = createScene();};
+        initFunction().then(() => {sceneToRender = scene                    
+    });
+    </script>
+</body>
+</html>
