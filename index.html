@@ -85,6 +85,9 @@
         //code
         let pathBlockArray = [];
         let pathArray = [];
+        let leftwall = [];
+        let rightwall = [];
+        let boxArray = [];
         var curve = BABYLON.Curve3;
         const previewBlock = BABYLON.MeshBuilder.CreateBox("previewBlock",{});
 
@@ -116,23 +119,72 @@
                 }
             }
 
+            //remove block
             if(event.keyCode == 90){
                 pathBlockArray.pop().dispose();
                 pathArray.pop();
                 generateCurve();
             }
+
+            //generate
+            if(event.keyCode == 71){
+                var curve = new BABYLON.Curve3.CreateCatmullRomSpline(pathArray, 50, false);
+                var pointsArray = uniqVec3Floor(curve.getPoints());
+                for(pointIndex in pointsArray){
+                    boxArray.push(BABYLON.MeshBuilder.CreateDisc("trackWalls",{radius:8,tessellation:8},scene));
+                    box = boxArray[boxArray.length-1];
+                    box.rotation.x = 1.6;
+                    box.position.x = Math.floor(pointsArray[pointIndex]._x);
+                    box.position.z = Math.floor(pointsArray[pointIndex]._z);
+                }
+                var bigmesh = BABYLON.Mesh.MergeMeshes(boxArray);
+                var floorBlockArray = uniqVec3Floor(bigmesh.getFacetLocalPositions().sort());
+                var finalString = "";
+                for(index in floorBlockArray){
+                    val = floorBlockArray[index];
+                    finalString+="setblock ~"+val.x+" ~-3 ~"+val.z+" packed_ice\r\n";
+                }
+                console.log(finalString);
+            }
         });
 
 
+        function uniqVec3Floor(a){
+            temparray = [];
+            for(pointIndex in a){
+                    if(pointIndex == 0){
+                        continue;
+                    }
+                    v1 = a[pointIndex-1]
+                    v2 = a[pointIndex]
+                    v1.y = 0;
+                    if(Math.floor(v1._x) == Math.floor(v2._x) && Math.floor(v1._z) == Math.floor(v2._z)){
+                        continue;
+                    } else {
+                        v1._x = Math.floor(v1._x);
+                        v1._z = Math.floor(v1._z);
+                        temparray.push(v1);
+                    }
+                }
+            return temparray;
+        }
+
+        function uniqBy(a, key) {
+           var seen = {};
+            return a.filter(function(item) {
+                var k = key(item);
+                return seen.hasOwnProperty(k) ? false : (seen[k] = true);
+            })
+        }
+
         function generateCurve(){
-            var curve = new BABYLON.Curve3.CreateCatmullRomSpline(pathArray, 25, false);
+            var curve = new BABYLON.Curve3.CreateCatmullRomSpline(pathArray, 50, false);
             while(scene.getMeshByName("lines") != null){
                 scene.getMeshByName("lines").dispose();
             }
             var lines = BABYLON.MeshBuilder.CreateLines("lines", {points: curve.getPoints()}, scene);
             scene.addMesh(lines);
         }
-
         return scene;
     };
     window.initFunction = async function() {
