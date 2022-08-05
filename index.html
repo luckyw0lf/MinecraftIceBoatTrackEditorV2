@@ -85,8 +85,7 @@
         //code
         let pathBlockArray = [];
         let pathArray = [];
-        let leftwall = [];
-        let rightwall = [];
+        let pathCordinates = [];
         let boxArray = [];
         var curve = BABYLON.Curve3;
         const previewBlock = BABYLON.MeshBuilder.CreateBox("previewBlock",{});
@@ -128,22 +127,27 @@
 
             //generate
             if(event.keyCode == 71){
-                var curve = new BABYLON.Curve3.CreateCatmullRomSpline(pathArray, 50, false);
+                var curve = new BABYLON.Curve3.CreateCatmullRomSpline(pathArray, 25, false);
                 var pointsArray = uniqVec3Floor(curve.getPoints());
                 for(pointIndex in pointsArray){
-                    boxArray.push(BABYLON.MeshBuilder.CreateDisc("trackWalls",{radius:8,tessellation:8},scene));
+                    boxArray.push(BABYLON.MeshBuilder.CreateBox("trackWalls",{width:10,depth:10},scene));
                     box = boxArray[boxArray.length-1];
-                    box.rotation.x = 1.6;
-                    box.position.x = Math.floor(pointsArray[pointIndex]._x);
-                    box.position.z = Math.floor(pointsArray[pointIndex]._z);
+                    box.position.x = Math.round(pointsArray[pointIndex]._x);
+                    box.position.z = Math.round(pointsArray[pointIndex]._z);
                 }
-                var bigmesh = BABYLON.Mesh.MergeMeshes(boxArray);
-                var floorBlockArray = uniqVec3Floor(bigmesh.getFacetLocalPositions().sort());
                 var finalString = "";
-                for(index in floorBlockArray){
-                    val = floorBlockArray[index];
-                    finalString+="setblock ~"+val.x+" ~-3 ~"+val.z+" packed_ice\r\n";
+                for(index in boxArray){
+                    box = boxArray[index];
+                    x1 = box.position.x-5;
+                    z1 = box.position.z+5;
+                    x2 = box.position.x+5;
+                    z2 = box.position.z-5;
+                    finalString+="fill ~"+x1+" ~ ~"+z1+" ~"+x2+" ~ ~"+z2+" packed_ice\r\n";
                 }
+                // for(index in floorBlockArray){
+                //     val = floorBlockArray[index];
+                //     finalString+="setblock ~"+val.x+" ~-3 ~"+val.z+" packed_ice\r\n";
+                // }
                 console.log(finalString);
             }
         });
@@ -158,11 +162,11 @@
                     v1 = a[pointIndex-1]
                     v2 = a[pointIndex]
                     v1.y = 0;
-                    if(Math.floor(v1._x) == Math.floor(v2._x) && Math.floor(v1._z) == Math.floor(v2._z)){
+                    if(Math.round(v1._x) == Math.round(v2._x) && Math.round(v1._z) == Math.round(v2._z)){
                         continue;
                     } else {
-                        v1._x = Math.floor(v1._x);
-                        v1._z = Math.floor(v1._z);
+                        v1._x = Math.round(v1._x);
+                        v1._z = Math.round(v1._z);
                         temparray.push(v1);
                     }
                 }
